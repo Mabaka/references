@@ -44,7 +44,8 @@ def handle_gotten_links(links,titles):
                                                            'post_content',
                                                            'article-body',
                                                            'textBlock',
-                                                           'uni-blog-article-container']}
+                                                           'uni-blog-article-container',
+                                                            'stack center-images stack--block type']}
     ex_headers = ['References',
                   'СПИСОК ЦИТИРУЕМОЙ ЛИТЕРАТУРЫ',
                   'Список литературы / References',

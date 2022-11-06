@@ -3,8 +3,8 @@ import requests
 from bs4 import BeautifulSoup as BS
 import numpy as np
 import pandas as pd
-from docx import Document
 import json
+import re
 
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:65.0) Gecko/20100101 Firefox/65.0"
 
@@ -34,7 +34,15 @@ def handle_query_result(result,key_words):
 
 def handle_gotten_links(links,titles):
     tags = ['p','font']
-    ex_headers = ['References','СПИСОК ЦИТИРУЕМОЙ ЛИТЕРАТУРЫ','Список литературы / References','СПИСОК ЛИТЕРАТУРЫ','ЛИТЕРАТУРА']
+    tags_article_text = {'itemprop':'articleBody','class':['l-island-a','article-container','article-formatted-body','pw-post-body-paragraph','article-body','textBlock']}
+    ex_headers = ['References',
+                  'СПИСОК ЦИТИРУЕМОЙ ЛИТЕРАТУРЫ',
+                  'Список литературы / References',
+                  'СПИСОК ЛИТЕРАТУРЫ',
+                  'ЛИТЕРАТУРА',
+                  'Библиографический список',
+                  'Список используемой литературы:']
+
     data = {}
     data['elements'] = []
 
@@ -46,27 +54,55 @@ def handle_gotten_links(links,titles):
             if resp.status_code == 200:
                 soup = BS(resp.content, "html.parser")
 
-                for ex_header in ex_headers:
-                    references_el = soup.find(text = ex_header)
-                    if references_el == None:
-                        continue
+                article_text = ""
+                for tag_article_text_key in tags_article_text:
+                    if isinstance(tags_article_text[tag_article_text_key],list):
+                        for el in tags_article_text[tag_article_text_key]:
+                            article_text = soup.find_all('div',el)
+                            if len(article_text) != 0:
+                                break
+                    else:
+                        article_text = soup.find_all('div',
+                                                     {tag_article_text_key: tags_article_text[tag_article_text_key]})
+                        if len(article_text) != 0:
+                            break
 
-                    json_el = {"from": link}
-                    ref_a = []
-                    for tag in tags:
-                        references_list = references_el.find_all_next(tag)
-                        if len(references_list) == 0:
-                            continue
+                    if len(article_text) == 0:
+                         continue
 
-                        for ref in references_list:
-                            ref_a.append(ref.text)
+                article_text_for_add = ''
+                json_el = {"from": link}
+                for text in article_text:
+                    article_text_for_add += re.sub("\s+|\n|\s+$",' ',text.text) + '\n'
 
-                    json_el['ref'] = ref_a
-                    data['elements'].append(json_el)
+                    for ex_header in ex_headers:
+                        references_el = text.find_all_next(text = ex_header)
+
+                        ref_a = []
+                        for tag in tags:
+                            if len(references_el) == 0:
+                                continue
+
+                            references_list = references_el[0].find_all_next(tag)
+
+                            if len(references_list) == 0:
+                                continue
+
+                            for ref in references_list:
+                                ref_a.append(ref.text)
+
+                            json_el['ref'] = ref_a
+                            article_text_for_add_splited = article_text_for_add.split(ex_header)
+                            if len(article_text_for_add_splited) != 0:
+                                article_text_for_add = article_text_for_add_splited[0]
+
+                json_el['text'] = article_text_for_add
+                data['elements'].append(json_el)
+
         except Exception as e:
             print(e)
 
-    with open('data.json', 'w') as outfile:
+    with open('data.json', 'w',encoding="utf-8") as outfile:
         json.dump(data, outfile,ensure_ascii=False,indent=4)
 
 

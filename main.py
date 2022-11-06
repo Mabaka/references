@@ -34,7 +34,17 @@ def handle_query_result(result,key_words):
 
 def handle_gotten_links(links,titles):
     tags = ['p','font']
-    tags_article_text = {'itemprop':'articleBody','class':['l-island-a','article-container','article-formatted-body','pw-post-body-paragraph','article-body','textBlock']}
+    tags_article_text = {'itemprop':'articleBody',
+                         'class':
+                                ['l-island-a',
+                                                           'article-container',
+                                                           'article-formatted-body',
+                                                           'pw-post-body-paragraph',
+                                                           'article','post-body',
+                                                           'post_content',
+                                                           'article-body',
+                                                           'textBlock',
+                                                           'uni-blog-article-container']}
     ex_headers = ['References',
                   'СПИСОК ЦИТИРУЕМОЙ ЛИТЕРАТУРЫ',
                   'Список литературы / References',
